@@ -1,5 +1,5 @@
 import os.path
-from tui.tui import StaticAndLabelApp
+from tui.tui import TemplateTool
 from config import create_config, validate_config
 
 if __name__ == "__main__":
@@ -17,5 +17,5 @@ if __name__ == "__main__":
         print(f"Config file at {config_path} is invalid.")
         exit(1)
 
-    app = StaticAndLabelApp()
+    app = TemplateTool()
     app.run()
