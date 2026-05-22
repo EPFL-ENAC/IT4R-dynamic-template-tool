@@ -1,9 +1,6 @@
 Screen {
-    outline: round $accent;
-}
-
-Screen {
     layout: vertical;
+    outline: round $accent;
 }
 
 Header {
@@ -19,11 +16,14 @@ Header {
     width: 25%;
     height: 100%;
     background: $surface;
+    border: solid $accent;
 }
 
 #content {
     width: 1fr;
     height: 100%;
+    padding: 1 2;
+    overflow-y: auto;
 }
 
 #validation-bar {
@@ -34,4 +34,44 @@ Header {
 
 #validate {
     width: 100%;
+}
+
+.title {
+    text-style: bold;
+    text-align: center;
+    margin-bottom: 1;
+    color: $accent;
+}
+
+.section-title {
+    text-style: bold;
+    margin-top: 1;
+    margin-bottom: 0;
+    color: $primary;
+}
+
+.description {
+    color: $text;
+    margin-bottom: 1;
+}
+
+.value {
+    text-style: bold;
+    color: $success;
+}
+
+.input-row {
+    layout: horizontal;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.input-label {
+    width: 20%;
+}
+
+.content-grid {
+    layout: grid;
+    width: 100%;
+    margin-bottom: 1;
 }
