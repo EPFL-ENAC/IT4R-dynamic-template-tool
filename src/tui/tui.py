@@ -2,24 +2,29 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Static, Tree, Button, Label, Input, Checkbox, Select
 from textual.containers import Container, Vertical, Horizontal, Grid
 
-PAGE_REGISTRY: dict[str, dict] = {
+ANSWER_REGISTRY: dict[str, dict] = {
     "GitHub": {
-        "title": "GitHub",
-        "content": [
-            {"type": "label", "label": "Welcome to the GitHub Page", "classes": "title"},
-
-            {"type": "input", "label": "Template repository URL", "placeholder": "https://github.com/user/repo.git"},
-
-            {"type": "input", "label": "Branch", "placeholder": "main"},
-            {"type": "checkbox", "label": "Include submodules"},
-
-            {"type": "input", "label": "New repository link", "placeholder": "https://github.com/user/new-repo.git"},
-        ]
+        "template_repo": "https://github.com/EPFL-ENAC/template-repo.git",
+        "branch": "main",
+        "include_submodules": False,
+        "new_repo_link": "https://github.com/EPFL-ENAC/new-repo.git",
     },
+    "Projet": {
+        "Lab_name": "My Lab",
+        "project_name": "My Project",
+        "project_description": "A description of my project.",
+        "Domain_name_dev": "Development.com",
+        "Domain_name_prod": "Production.com",
+    }
 }
+
+
+SECTIONS = ["GitHub", "Projet"]
 
 class TemplateTool(App):
     CSS_PATH = "tui.tcss"
+
+    current_page = "GitHub"
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -38,51 +43,57 @@ class TemplateTool(App):
         self.sub_title = "Made with love by Quentin"
         
         tree = self.query_one("#menu", Tree)
-        for page_key, page_data in PAGE_REGISTRY.items():
-            tree.root.add(page_data["title"], page_key)
+        for page_key in SECTIONS:
+            tree.root.add(page_key, page_key)
         tree.root.expand_all()
         
         self.load_page("GitHub")
 
     def load_page(self, page_key: str) -> None:
-        if page_key not in PAGE_REGISTRY:
-            return
-        page_data = PAGE_REGISTRY[page_key]
         content_container = self.query_one("#content", Vertical)
         content_container.remove_children()
         
-        for widget_config in page_data["content"]:
-            widget_type = widget_config["type"]
-            if widget_type == "label":
-                content_container.mount(Label(widget_config["label"], classes=widget_config.get("classes", "")))
-            elif widget_type == "input":
-                input_row = Horizontal(classes="input-row")
-                content_container.mount(input_row)
-                input_row.mount(Label(widget_config["label"], classes="input-label"))
-                input_row.mount(Input(placeholder=widget_config.get("placeholder", "")))
-            elif widget_type == "checkbox":
-                content_container.mount(Checkbox(widget_config["label"]))
-            elif widget_type == "select":
-                select_row = Horizontal(classes="input-row")
-                content_container.mount(select_row)
-                select_row.mount(Label(widget_config["label"], classes="input-label"))
-                options = widget_config.get("options", [])
-                select_row.mount(Select(options, allow_blank=False))
-            elif widget_type == "grid":
-                grid = Grid(classes="content-grid")
-                cols = widget_config.get("cols", 2)
-                grid.styles.grid_columns = [f"1fr" for _ in range(cols)]
-                content_container.mount(grid)
-                for item in widget_config["items"]:
-                    grid.mount(Label(item["label"], classes=item.get("classes", "")))
+        if(page_key == "GitHub"):
+            current_data = ANSWER_REGISTRY.get("GitHub", {})
+            
+            content_container.mount(Label("GitHub Config", classes="title"))
+            content_container.mount(Label("Template repository link :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("template_repo", ""), id="template_repo"))
+            content_container.mount(Label("Branch :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("branch", ""), id="branch"))
+            content_container.mount(Label("New repository link :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("new_repo_link", ""), id="new_repo_link"))
+            content_container.mount(Label("Include submodules :", classes="subtitle"))
+            content_container.mount(Checkbox(label="Include submodules", value=current_data.get("include_submodules", False), id="include_submodules"))
+
+        elif page_key == "Projet":
+            content_container.mount(Label("Project Config", classes="title"))
+            current_data = ANSWER_REGISTRY.get("Projet", {})
+            content_container.mount(Label("Project name :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("project_name", ""), id="project_name"))
+            content_container.mount(Label("Lab name :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("Lab_name", ""), id="Lab_name"))
+            content_container.mount(Label("Project description :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("project_description", ""), id="project_description"))
+            content_container.mount(Label("Development domain name :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("Domain_name_dev", ""), id="Domain_name_dev"))
+            content_container.mount(Label("Production domain name :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_data.get("Domain_name_prod", ""), id="Domain_name_prod"))
 
     def on_tree_node_selected(self, event: Tree.NodeSelected[str]) -> None:
         event.stop()
         page_key = event.node.data
-        if page_key in PAGE_REGISTRY:
+        if page_key in SECTIONS:
+            self.current_page = page_key
             self.load_page(page_key)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "validate":
             # Placeholder for validation logic
             self.sub_title = "Validation complete!"
+    
+    def on_input_changed(self, event: Input.Changed) -> None:
+        ANSWER_REGISTRY[self.current_page][event.input.id] = event.value
+    
+    def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
+        ANSWER_REGISTRY[self.current_page][event.checkbox.id] = event.value
