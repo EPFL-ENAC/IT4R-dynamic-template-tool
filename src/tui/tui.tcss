@@ -1,6 +1,7 @@
 Screen {
     layout: vertical;
     outline: round $accent;
+    background: black;
 }
 
 Header {
@@ -15,7 +16,7 @@ Header {
 #menu {
     width: 25%;
     height: 100%;
-    background: $surface;
+    background: black;
     border: solid $accent;
 }
 

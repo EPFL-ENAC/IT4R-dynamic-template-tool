@@ -15,10 +15,16 @@ ANSWER_REGISTRY: dict[str, dict] = {
         "project_description": "",
         "Domain_name_dev": "",
         "Domain_name_prod": "",
+        "Domain_name_stage": "",
     },
     "CI/CD": {
         "keep_ci": True,
         "keep_pre_commits": True,
+    },
+    "Updates" :{
+        "dependances": True,
+        "pre-commit": True,
+        "ci_cd": True,
     },
     "LLM": {
         "additional_prompt": ""
@@ -36,12 +42,18 @@ PLACEHOLDER_REGISTRY: dict[str, dict] = {
         "Lab_name": "My Lab",
         "project_name": "My Project",
         "project_description": "A description of my project.",
-        "Domain_name_dev": "Development.com",
-        "Domain_name_prod": "Production.com",
+        "Domain_name_dev": "Development.epfl.ch",
+        "Domain_name_prod": "Production.epfl.ch",
+        "Domain_name_stage": "Staging.epfl.ch",
     },
     "CI/CD": {
         "keep_ci": True,
         "keep_pre_commits": True,
+    },
+    "Updates": {
+        "dependances": True,
+        "pre-commit": True,
+        "ci_cd": True,
     },
     "LLM": {
         "additional_prompt": ""
@@ -49,7 +61,7 @@ PLACEHOLDER_REGISTRY: dict[str, dict] = {
 }
 
 
-SECTIONS = ["GitHub", "Projet", "CI/CD", "LLM"]
+SECTIONS = ["GitHub", "Projet", "CI/CD", "Updates", "LLM"]
 
 class TemplateTool(App):
     CSS_PATH = "tui.tcss"
@@ -88,11 +100,11 @@ class TemplateTool(App):
             current_placeholders = PLACEHOLDER_REGISTRY.get("GitHub", {})
             
             content_container.mount(Label("GitHub Config", classes="title"))
-            content_container.mount(Label("Template repository link :", classes="subtitle"))
+            content_container.mount(Label("Template repository link (*) :", classes="subtitle"))
             content_container.mount(Input(placeholder=current_placeholders.get("template_repo", ""), value=current_data.get("template_repo", ""), id="template_repo"))
             content_container.mount(Label("Branch :", classes="subtitle"))
             content_container.mount(Input(placeholder=current_placeholders.get("branch", ""), value=current_data.get("branch", ""), id="branch"))
-            content_container.mount(Label("New repository link :", classes="subtitle"))
+            content_container.mount(Label("New repository link (*) :", classes="subtitle"))
             content_container.mount(Input(placeholder=current_placeholders.get("new_repo_link", ""), value=current_data.get("new_repo_link", ""), id="new_repo_link"))
             content_container.mount(Label("Include submodules :", classes="subtitle"))
             content_container.mount(Checkbox(label="Include submodules", value=current_data.get("include_submodules", False), id="include_submodules"))
@@ -102,7 +114,7 @@ class TemplateTool(App):
             current_placeholders = PLACEHOLDER_REGISTRY.get("Projet", {})
 
             content_container.mount(Label("Project Config", classes="title"))
-            content_container.mount(Label("Project name :", classes="subtitle"))
+            content_container.mount(Label("Project name (*) :", classes="subtitle"))
             content_container.mount(Input(placeholder=current_placeholders.get("project_name", ""), value=current_data.get("project_name", ""), id="project_name"))
             content_container.mount(Label("Lab name :", classes="subtitle"))
             content_container.mount(Input(placeholder=current_placeholders.get("Lab_name", ""), value=current_data.get("Lab_name", ""), id="Lab_name"))
@@ -112,7 +124,9 @@ class TemplateTool(App):
             content_container.mount(Input(placeholder=current_placeholders.get("Domain_name_dev", ""), value=current_data.get("Domain_name_dev", ""), id="Domain_name_dev"))
             content_container.mount(Label("Production domain name :", classes="subtitle"))
             content_container.mount(Input(placeholder=current_placeholders.get("Domain_name_prod", ""), value=current_data.get("Domain_name_prod", ""), id="Domain_name_prod"))
-
+            content_container.mount(Label("Staging domain name :", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_placeholders.get("Domain_name_stage", ""), value=current_data.get("Domain_name_stage", ""), id="Domain_name_stage"))
+        
         elif page_key == "CI/CD":
             current_data = ANSWER_REGISTRY.get("CI/CD", {})
             current_placeholders = PLACEHOLDER_REGISTRY.get("CI/CD", {})
@@ -120,6 +134,16 @@ class TemplateTool(App):
             content_container.mount(Label("CI/CD Config", classes="title"))
             content_container.mount(Checkbox(label="Keep existing CI/CD configuration", value=current_data.get("keep_ci", False), id="keep_ci"))
             content_container.mount(Checkbox(label="Keep existing pre-commit configuration", value=current_data.get("keep_pre_commits", False), id="keep_pre_commits"))
+        
+        elif page_key == "Updates":
+            current_data = ANSWER_REGISTRY.get("Updates", {})
+            current_placeholders = PLACEHOLDER_REGISTRY.get("Updates", {})
+
+            content_container.mount(Label("Updates Config", classes="title"))
+            content_container.mount(Checkbox(label="Update dependances", value=current_data.get("dependances", False), id="dependances"))
+            content_container.mount(Checkbox(label="Update pre-commit configuration", value=current_data.get("pre-commit", False), id="pre-commit"))
+            content_container.mount(Checkbox(label="Update CI/CD configuration", value=current_data.get("ci_cd", False), id="ci_cd"))
+
         elif page_key == "LLM":
             current_data = ANSWER_REGISTRY.get("LLM", {})
             current_placeholders = PLACEHOLDER_REGISTRY.get("LLM", {})
@@ -129,6 +153,8 @@ class TemplateTool(App):
             content_container.mount(Label("*Prompt for cleaning the template repository*", classes="subtitle"))
             content_container.mount(Label("Add an aditionnal prompt to the existing one:", classes="subtitle"))
             content_container.mount(Input(placeholder=current_placeholders.get("additional_prompt", ""), value=current_data.get("additional_prompt", ""), id="additional_prompt"))
+        
+        content_container.mount(Label("*Fields marked with (*) are required*", classes="footer"))
 
 
     def on_tree_node_selected(self, event: Tree.NodeSelected[str]) -> None:
