@@ -13,7 +13,6 @@ def make_template_repo(data):
         clone_options += "--recurse-submodules "
     clone_options += f"--branch {data['GitHub']['branch']} "
     clone_options += f"{data['GitHub']['template_repo']} "
-    clone_options += f" -key"
     os.system(f"git clone {clone_options}")
 
     # Delete the .git directory to remove the template repository's history
@@ -47,6 +46,9 @@ def make_template_repo(data):
         base_prompt += f"{section}:\n"
         for key, value in values.items():
             base_prompt += f"  - {key}: {value}\n"
-    os.write("llm_prompt.txt", base_prompt)
+
+    with open("llm_prompt.txt", "w") as f:
+        f.write(base_prompt)
+    return
 
     

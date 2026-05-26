@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Static, Tree, Button, Label, Input, Checkbox, Select
 from textual.containers import Container, Vertical, Horizontal, Grid
-from scripts import validate_data
+from scripts import validate_data, make_template_repo
 
 ANSWER_REGISTRY: dict[str, dict] = {
     "GitHub": {
@@ -214,6 +214,8 @@ class TemplateTool(App):
             else:
                 self.in_process = True
                 self.query_one("#validation-errors", Static).update("Validation passed.")
+                make_template_repo(ANSWER_REGISTRY)
+                exit(1)
     
     def on_input_changed(self, event: Input.Changed) -> None:
         ANSWER_REGISTRY[self.current_page][event.input.id] = event.value
