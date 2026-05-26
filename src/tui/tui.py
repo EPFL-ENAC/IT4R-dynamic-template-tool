@@ -1,6 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Static, Tree, Button, Label, Input, Checkbox, Select
 from textual.containers import Container, Vertical, Horizontal, Grid
+from scripts import validate_data
 
 ANSWER_REGISTRY: dict[str, dict] = {
     "GitHub": {
@@ -67,6 +68,8 @@ class TemplateTool(App):
     CSS_PATH = "tui.tcss"
 
     current_page = "GitHub"
+    in_process = False
+    errors=[]
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -166,11 +169,16 @@ class TemplateTool(App):
                 self.load_page(page_key)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id == "validate":
-            self.exit(ANSWER_REGISTRY)
-            # verify urls
-            # verify that no required field is empty
-            # if all good, exit and return the ANSWER_REGISTRY
+        if event.button.id == "validate" and not self.in_process:
+            errors = validate_data(ANSWER_REGISTRY)
+            if errors:
+                error_message = "Validation errors:\n" + "\n".join(errors)
+                self.errors = errors
+                self.push_screen(Static(error_message, classes="error-screen"))
+            else:
+                self.in_process = True
+
+            exit(1)
     
     def on_input_changed(self, event: Input.Changed) -> None:
         ANSWER_REGISTRY[self.current_page][event.input.id] = event.value
