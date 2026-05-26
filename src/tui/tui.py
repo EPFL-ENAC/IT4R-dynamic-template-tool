@@ -4,6 +4,29 @@ from textual.containers import Container, Vertical, Horizontal, Grid
 
 ANSWER_REGISTRY: dict[str, dict] = {
     "GitHub": {
+        "template_repo": "",
+        "branch": "main",
+        "include_submodules": False,
+        "new_repo_link": "",
+    },
+    "Projet": {
+        "Lab_name": "",
+        "project_name": "",
+        "project_description": "",
+        "Domain_name_dev": "",
+        "Domain_name_prod": "",
+    },
+    "CI/CD": {
+        "keep_ci": True,
+        "keep_pre_commits": True,
+    },
+    "LLM": {
+        "additional_prompt": ""
+    }
+}
+
+PLACEHOLDER_REGISTRY: dict[str, dict] = {
+    "GitHub": {
         "template_repo": "https://github.com/EPFL-ENAC/template-repo.git",
         "branch": "main",
         "include_submodules": False,
@@ -15,11 +38,18 @@ ANSWER_REGISTRY: dict[str, dict] = {
         "project_description": "A description of my project.",
         "Domain_name_dev": "Development.com",
         "Domain_name_prod": "Production.com",
+    },
+    "CI/CD": {
+        "keep_ci": True,
+        "keep_pre_commits": True,
+    },
+    "LLM": {
+        "additional_prompt": ""
     }
 }
 
 
-SECTIONS = ["GitHub", "Projet"]
+SECTIONS = ["GitHub", "Projet", "CI/CD", "LLM"]
 
 class TemplateTool(App):
     CSS_PATH = "tui.tcss"
@@ -55,42 +85,66 @@ class TemplateTool(App):
         
         if(page_key == "GitHub"):
             current_data = ANSWER_REGISTRY.get("GitHub", {})
+            current_placeholders = PLACEHOLDER_REGISTRY.get("GitHub", {})
             
             content_container.mount(Label("GitHub Config", classes="title"))
             content_container.mount(Label("Template repository link :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("template_repo", ""), id="template_repo"))
+            content_container.mount(Input(placeholder=current_placeholders.get("template_repo", ""), value=current_data.get("template_repo", ""), id="template_repo"))
             content_container.mount(Label("Branch :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("branch", ""), id="branch"))
+            content_container.mount(Input(placeholder=current_placeholders.get("branch", ""), value=current_data.get("branch", ""), id="branch"))
             content_container.mount(Label("New repository link :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("new_repo_link", ""), id="new_repo_link"))
+            content_container.mount(Input(placeholder=current_placeholders.get("new_repo_link", ""), value=current_data.get("new_repo_link", ""), id="new_repo_link"))
             content_container.mount(Label("Include submodules :", classes="subtitle"))
             content_container.mount(Checkbox(label="Include submodules", value=current_data.get("include_submodules", False), id="include_submodules"))
 
         elif page_key == "Projet":
-            content_container.mount(Label("Project Config", classes="title"))
             current_data = ANSWER_REGISTRY.get("Projet", {})
+            current_placeholders = PLACEHOLDER_REGISTRY.get("Projet", {})
+
+            content_container.mount(Label("Project Config", classes="title"))
             content_container.mount(Label("Project name :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("project_name", ""), id="project_name"))
+            content_container.mount(Input(placeholder=current_placeholders.get("project_name", ""), value=current_data.get("project_name", ""), id="project_name"))
             content_container.mount(Label("Lab name :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("Lab_name", ""), id="Lab_name"))
+            content_container.mount(Input(placeholder=current_placeholders.get("Lab_name", ""), value=current_data.get("Lab_name", ""), id="Lab_name"))
             content_container.mount(Label("Project description :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("project_description", ""), id="project_description"))
+            content_container.mount(Input(placeholder=current_placeholders.get("project_description", ""), value=current_data.get("project_description", ""), id="project_description"))
             content_container.mount(Label("Development domain name :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("Domain_name_dev", ""), id="Domain_name_dev"))
+            content_container.mount(Input(placeholder=current_placeholders.get("Domain_name_dev", ""), value=current_data.get("Domain_name_dev", ""), id="Domain_name_dev"))
             content_container.mount(Label("Production domain name :", classes="subtitle"))
-            content_container.mount(Input(placeholder=current_data.get("Domain_name_prod", ""), id="Domain_name_prod"))
+            content_container.mount(Input(placeholder=current_placeholders.get("Domain_name_prod", ""), value=current_data.get("Domain_name_prod", ""), id="Domain_name_prod"))
+
+        elif page_key == "CI/CD":
+            current_data = ANSWER_REGISTRY.get("CI/CD", {})
+            current_placeholders = PLACEHOLDER_REGISTRY.get("CI/CD", {})
+
+            content_container.mount(Label("CI/CD Config", classes="title"))
+            content_container.mount(Checkbox(label="Keep existing CI/CD configuration", value=current_data.get("keep_ci", False), id="keep_ci"))
+            content_container.mount(Checkbox(label="Keep existing pre-commit configuration", value=current_data.get("keep_pre_commits", False), id="keep_pre_commits"))
+        elif page_key == "LLM":
+            current_data = ANSWER_REGISTRY.get("LLM", {})
+            current_placeholders = PLACEHOLDER_REGISTRY.get("LLM", {})
+
+            content_container.mount(Label("LLM Config", classes="title"))
+            content_container.mount(Label("Here is the prompt that will be used to clean the template repository:", classes="subtitle"))
+            content_container.mount(Label("*Prompt for cleaning the template repository*", classes="subtitle"))
+            content_container.mount(Label("Add an aditionnal prompt to the existing one:", classes="subtitle"))
+            content_container.mount(Input(placeholder=current_placeholders.get("additional_prompt", ""), value=current_data.get("additional_prompt", ""), id="additional_prompt"))
+
 
     def on_tree_node_selected(self, event: Tree.NodeSelected[str]) -> None:
         event.stop()
         page_key = event.node.data
         if page_key in SECTIONS:
-            self.current_page = page_key
-            self.load_page(page_key)
+            if self.current_page != page_key:
+                self.current_page = page_key
+                self.load_page(page_key)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "validate":
-            # Placeholder for validation logic
-            self.sub_title = "Validation complete!"
+            self.exit(ANSWER_REGISTRY)
+            # verify urls
+            # verify that no required field is empty
+            # if all good, exit and return the ANSWER_REGISTRY
     
     def on_input_changed(self, event: Input.Changed) -> None:
         ANSWER_REGISTRY[self.current_page][event.input.id] = event.value
