@@ -34,10 +34,10 @@ ANSWER_REGISTRY: dict[str, dict] = {
 
 PLACEHOLDER_REGISTRY: dict[str, dict] = {
     "GitHub": {
-        "template_repo": "https://github.com/EPFL-ENAC/template-repo.git",
+        "template_repo": "git@github.com:EPFL-ENAC/template-repo.git",
         "branch": "main",
         "include_submodules": False,
-        "new_repo_link": "https://github.com/EPFL-ENAC/new-repo.git",
+        "new_repo_link": "git@github.com:EPFL-ENAC/new-repo.git",
     },
     "Projet": {
         "Lab_name": "My Lab",
@@ -69,7 +69,7 @@ class TemplateTool(App):
 
     current_page = "GitHub"
     in_process = False
-    errors=[]
+    errors: list[str] = []
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -80,8 +80,9 @@ class TemplateTool(App):
 
             yield Vertical(id="content")
 
-        with Horizontal(id="validation-bar"):
+        with Vertical(id="validation-bar"):
             yield Button("Validate", id="validate")
+            yield Static("", id="validation-errors")
 
     def on_mount(self) -> None:
         self.title = "ENAC-IT4R Dynamic Template Tool"
@@ -159,6 +160,40 @@ class TemplateTool(App):
         
         content_container.mount(Label("*Fields marked with (*) are required*", classes="footer"))
 
+    def _clear_validation_state(self) -> None:
+        self.query_one("#validation-errors", Static).update("")
+
+        for widget_id in ("template_repo", "new_repo_link", "project_name"):
+            matches = list(self.query(f"#{widget_id}"))
+            if matches:
+                matches[0].remove_class("invalid")
+
+    def _display_validation_errors(self, errors: list[str]) -> None:
+        error_panel = self.query_one("#validation-errors", Static)
+        error_panel.update("Validation errors:\n" + "\n".join(f"- {error}" for error in errors))
+
+        invalid_fields = {
+            "GitHub: 'template_repo' is required.": "template_repo",
+            "GitHub: 'template_repo' must be a valid GitHub repository link (e.g., git@github.com:username/repo.git)": "template_repo",
+            "GitHub: 'new_repo_link' is required.": "new_repo_link",
+            "GitHub: 'new_repo_link' must be a valid GitHub repository link (e.g., git@github.com:username/repo.git)": "new_repo_link",
+            "Projet: 'project_name' is required.": "project_name",
+        }
+
+        for error in errors:
+            widget_id = invalid_fields.get(error)
+            if widget_id is None:
+                continue
+
+            matches = list(self.query(f"#{widget_id}"))
+            if matches:
+                matches[0].add_class("invalid")
+
+    def _clear_invalid_style(self, widget_id: str) -> None:
+        matches = list(self.query(f"#{widget_id}"))
+        if matches:
+            matches[0].remove_class("invalid")
+
 
     def on_tree_node_selected(self, event: Tree.NodeSelected[str]) -> None:
         event.stop()
@@ -170,18 +205,19 @@ class TemplateTool(App):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "validate" and not self.in_process:
+            self._clear_validation_state()
             errors = validate_data(ANSWER_REGISTRY)
+            self.errors = errors
+
             if errors:
-                error_message = "Validation errors:\n" + "\n".join(errors)
-                self.errors = errors
-                self.push_screen(Static(error_message, classes="error-screen"))
+                self._display_validation_errors(errors)
             else:
                 self.in_process = True
-
-            exit(1)
+                self.query_one("#validation-errors", Static).update("Validation passed.")
     
     def on_input_changed(self, event: Input.Changed) -> None:
         ANSWER_REGISTRY[self.current_page][event.input.id] = event.value
+        self._clear_invalid_style(event.input.id)
     
     def on_checkbox_changed(self, event: Checkbox.Changed) -> None:
         ANSWER_REGISTRY[self.current_page][event.checkbox.id] = event.value
